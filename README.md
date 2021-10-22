@@ -1,2 +1,1 @@
-# MultistateEpigeneticPacemaker
-Multistate Epigenetic Pacemaker
+# Multistate Epigenetic Pacemaker

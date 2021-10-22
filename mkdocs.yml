@@ -1,0 +1,11 @@
+site_name: Multistate Epigenetic Pacemaker
+
+repo_url: https://github.com/NuttyLogic/MultistateEpigeneticPacemaker
+repo_name: 'GitHub'
+
+theme:
+  name: 'readthedocs'
+nav:
+    - Home: index.md
+    - API: API.md
+    - Tutorial: tutorial.md
