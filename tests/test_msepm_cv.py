@@ -21,15 +21,13 @@ m_nots, rates = site_info[:, 0], site_info[:, 1]
 
 
 epm_cv = MultistateEpigeneticPacemakerCV(cv_folds=4, learning_rate=0.1,
-                               scale_X=True, verbose=True,
-                               cv_predictions=True)
-epm_cv.fit(ages, meth)
+                                         scale_X=True, verbose=True)
+epm_cv_predictions = epm_cv.fit(ages, meth, return_out_of_fold_predictions=True)
 
 epm_cv_ran = MultistateEpigeneticPacemakerCV(cv_folds=4, learning_rate=0.1,
-                                   scale_X=True, verbose=True,
-                                   cv_predictions=True,
-                                   randomize_sample_order=True)
-epm_cv_ran.fit(ages, meth)
+                                             scale_X=True, verbose=True,
+                                             randomize_sample_order=True)
+epm_cv_ran_predictions = epm_cv_ran.fit(ages, meth, return_out_of_fold_predictions=True)
 
 fold_predictions = []
 for step in tqdm(range(4), desc='EPM Validation Folds'):
@@ -53,13 +51,13 @@ class TestMSEPMCV(unittest.TestCase):
 
     def test_fold_prediction(self):
         """Check that cv gives same age prediction"""
-        for cv_age, epm_age in zip(epm_cv.predictions[:, 0], fold_predictions):
+        for cv_age, epm_age in zip(epm_cv_predictions[:, 0], fold_predictions):
             self.assertAlmostEqual(cv_age, epm_age)
 
     def test_ran_fold_prediction(self):
         """Check that cv gives same age prediction"""
-        for cv_age, ran_cv_age in zip(epm_cv.predictions[:, 0],
-                                      epm_cv_ran.predictions[:, 0]):
+        for cv_age, ran_cv_age in zip(epm_cv_predictions[:, 0],
+                                      epm_cv_ran_predictions[:, 0]):
             self.assertAlmostEqual(cv_age, ran_cv_age, 2)
 
     def test_site_rates(self):
