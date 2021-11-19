@@ -50,7 +50,7 @@ def construct_lstsq_solutions_matrix(system_solutions):
     res = np.zeros((len(system_solutions), len(system_solutions[0][1])))
     # construct using label to ensure matrix order
     for sol in system_solutions:
-        coefs[sol[0]] = sol[1].reshape(1,-1)
+        coefs[sol[0]] = sol[1].reshape(1, -1)
         intercepts[sol[0]] = sol[5]
         res[sol[0]] = sol[2]
     return coefs, intercepts, sum(res)
@@ -58,11 +58,11 @@ def construct_lstsq_solutions_matrix(system_solutions):
 
 def solve_regression_system(X: np.ndarray, Y: np.ndarray, n_jobs: int = 1, fit_intercept: bool = True):
     """Fit linear least squares regression
-     with every row of Y $$n \times m$$ matrix
+     with every row of Y $$n \\times m$$ matrix
 
     """
-    solutions = joblib.Parallel(n_jobs=n_jobs)(
-                joblib.delayed(lstsq)(*[X, Y[row], rid, fit_intercept, None]) for rid, row in enumerate(range(Y.shape[0])))
+    solutions = joblib.Parallel(n_jobs=n_jobs)(joblib.delayed(lstsq)(*[X, Y[row], rid, fit_intercept, None]) for
+                                               rid, row in enumerate(range(Y.shape[0])))
     return construct_lstsq_solutions_matrix(solutions)
 
 
@@ -72,7 +72,11 @@ def one_epm_step(X: np.ndarray, Y: np.ndarray, n_jobs=1):
     return state_site_sys, step_states
 
 
-def predict_epm_states(epm_coefs, epm_intercepts, Y) -> np.ndarray:
+def predict_epm_states(epm_coefs, epm_intercepts, Y) -> Tuple[np.ndarray, np.ndarray]:
     # predict epm results with trained system
-    res = lstsq(epm_coefs, Y - epm_intercepts.reshape(-1, 1), fit_intercept=False)
-    return res[1].T
+    rid, _coefs, _res, _rank, _sin_vals, _intercept = lstsq(epm_coefs, Y - epm_intercepts.reshape(-1, 1),
+                                                            fit_intercept=False)
+    return _coefs.T
+
+def get_site_residuals(epm_coefs, epm_intercepts, X, Y):
+    return Y - np.dot(epm_coefs, Y.T) - epm_intercepts.reshape(-1, 1)

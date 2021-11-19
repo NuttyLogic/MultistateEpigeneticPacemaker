@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-from msepm.compute import one_epm_step, predict_epm_states
+from msepm.compute import get_site_residuals, one_epm_step, predict_epm_states
 from msepm.scaler import Scaler
 from msepm.helpers import pearson_correlation
 
@@ -21,13 +21,14 @@ class EPMBase:
         self.scale_X = scale_X
         self.verbose = verbose
 
-    def predict(self, Y: np.ndarray):
+    def predict(self, Y: np.ndarray, return_residuals=False):
         if self._coefs is None:
             print("EPM model not trained\nRun .fit method to train model")
             return 1
-        return predict_epm_states(self._coefs,
-                                  self._intercepts,
-                                  Y)
+        _coef = predict_epm_states(self._coefs, self._intercepts, Y)
+        if return_residuals:
+            return _coef, get_site_residuals(self._coefs, self._intercepts, _coef, Y)
+        return _coef
 
     def fit_epm(self, X, Y, sample_weights=None, verbose=False):
         fit_X, fit_Y = np.copy(X, order='k'), np.copy(Y, order='k')
@@ -59,3 +60,4 @@ class EPMBase:
         predictions = self.predict(Y)
         scores = pearson_correlation(predictions, X.T)
         return np.array([scores[i][i] for i in range(scores.shape[0])])
+

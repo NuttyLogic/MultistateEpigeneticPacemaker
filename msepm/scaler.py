@@ -4,7 +4,7 @@ import numpy as np
 class Scaler:
     """Simple min, max scaler implementation for array with m samples and n features"""
 
-    def __init__(self):
+    def __init__(self, X_min=None, X_max=None):
         """
         attributes:
             self.X_min: np.ndarray = min of m rows
@@ -15,8 +15,9 @@ class Scaler:
 
     def fit(self, X: np.ndarray):
         """Set min and max values"""
-        self.X_min = np.min(X, axis=0)
-        self.X_max = np.max(X, axis=0)
+        if self.X_min is None or self.X_max is None:
+            self.X_min = np.min(X, axis=0)
+            self.X_max = np.max(X, axis=0)
 
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Scale input array to reference distribution range"""
