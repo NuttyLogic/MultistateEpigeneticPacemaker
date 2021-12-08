@@ -79,4 +79,4 @@ def predict_epm_states(epm_coefs, epm_intercepts, Y) -> Tuple[np.ndarray, np.nda
     return _coefs.T
 
 def get_site_residuals(epm_coefs, epm_intercepts, X, Y):
-    return Y - np.dot(epm_coefs, Y.T) - epm_intercepts.reshape(-1, 1)
+    return Y - np.dot(epm_coefs, X.T) - epm_intercepts.reshape(-1, 1)
