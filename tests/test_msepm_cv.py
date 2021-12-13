@@ -21,12 +21,14 @@ m_nots, rates = site_info[:, 0], site_info[:, 1]
 
 
 epm_cv = MultistateEpigeneticPacemakerCV(cv_folds=4, learning_rate=0.1,
-                                         scale_X=True, verbose=True)
+                                         scale_X=True, verbose=True,
+                                         n_jobs=4)
 epm_cv_predictions = epm_cv.fit(ages, meth, return_out_of_fold_predictions=True)
 
 epm_cv_ran = MultistateEpigeneticPacemakerCV(cv_folds=4, learning_rate=0.1,
                                              scale_X=True, verbose=True,
-                                             randomize_sample_order=True)
+                                             randomize_sample_order=True,
+                                             n_jobs=4)
 epm_cv_ran_predictions = epm_cv_ran.fit(ages, meth, return_out_of_fold_predictions=True)
 
 fold_predictions = []

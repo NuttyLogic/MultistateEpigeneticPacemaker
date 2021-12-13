@@ -1,7 +1,11 @@
 import random
+from typing import Dict, Tuple
+import joblib
 import numpy as np
 from tqdm import tqdm
 from msepm.base import EPMBase
+from msepm import MultistateEpigeneticPacemaker
+from msepm.helpers import tqdm_joblib
 
 
 class MultistateEpigeneticPacemakerCV(EPMBase):
@@ -31,30 +35,43 @@ class MultistateEpigeneticPacemakerCV(EPMBase):
         coefs, intercepts, errors = np.zeros((Y.shape[0], X_fit.shape[1])), np.zeros(Y.shape[0]), 0.0
         training_sample_count = 0
         predictions = {}
-        for test_indices in tqdm(cv_groups, disable=True if not self.verbose else False, desc='Fitting MSEPM CV'):
-            train_indices = [index for index in range(X.shape[0]) if index not in test_indices]
-            training_sample_count += len(train_indices)
-            train_Y = Y[:, train_indices]
-            train_X = X_fit[train_indices, :]
-
-            test_Y = Y[:, test_indices]
-
-            self.fit_epm(train_X, train_Y, sample_weights=sample_weights)
-            test_states = self.predict(test_Y)
-            if return_out_of_fold_predictions:
-                for index, state in zip(test_indices, test_states):
-                    predictions[index] = state
-
-            # weight the contribution of each fold by the number of samples in the fold
-            coefs += self._coefs * len(train_indices)
-            intercepts += self._intercepts * len(train_indices)
-            errors += self._error * len(train_indices)
+        with tqdm_joblib(tqdm(desc="Fitting CV Folds", total=self.cv_folds,
+                              disable=True if not self.verbose else False)) as progress_bar:
+            models = joblib.Parallel(n_jobs=self.n_jobs)(
+                joblib.delayed(self.fit_fold)(*[X_fit, Y,
+                                                test_indices,
+                                                return_out_of_fold_predictions,
+                                                sample_weights]) for
+                test_indices in cv_groups)
+        for model, train_len, model_predictions in models:
+            training_sample_count += train_len
+            predictions.update(model_predictions)
+            coefs += model._coefs * train_len
+            intercepts += model._intercepts * train_len
+            errors += model._error * train_len
             fold_count += 1
         self._coefs = coefs / training_sample_count
         self._intercepts = intercepts / training_sample_count
         self._error = errors / training_sample_count
         if return_out_of_fold_predictions:
             return self.unpack_out_of_fold_predictions(predictions)
+
+    def fit_fold(self, X, Y, test_indices, return_out_of_fold_predictions=False, sample_weights=None):
+        fold_epm = MultistateEpigeneticPacemaker(iter_limit=self.iter_limit, error_tolerance=self.error_tolerance,
+                                                 learning_rate=self.learning_rate, scale_X=self.scale_X, n_jobs=1)
+        train_indices = [index for index in range(X.shape[0]) if index not in test_indices]
+        train_Y = Y[:, train_indices]
+        train_X = X[train_indices, :]
+
+        test_Y = Y[:, test_indices]
+
+        fold_epm.fit(train_X, train_Y, sample_weights=sample_weights)
+        predictions = {}
+        if return_out_of_fold_predictions:
+            test_states = fold_epm.predict(test_Y)
+            for index, state in zip(test_indices, test_states):
+                predictions[index] = state
+        return fold_epm, len(train_indices), predictions
 
     def get_cv_folds(self, sample_number):
         if self.cv_folds < 0:
@@ -77,4 +94,3 @@ class MultistateEpigeneticPacemakerCV(EPMBase):
     @staticmethod
     def unpack_out_of_fold_predictions(predictions):
         return np.array([predictions[index] for index in range(len(predictions))])
-
