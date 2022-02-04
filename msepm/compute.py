@@ -2,6 +2,8 @@ from typing import Tuple
 import joblib
 import numpy as np
 
+from msepm.helpers import get_fold_step_size
+
 
 def lstsq(X: np.ndarray, y: np.ndarray, rid: int = 0,
           fit_intercept: bool = True, weights: np.ndarray = None):
@@ -47,13 +49,13 @@ def construct_lstsq_solutions_matrix(system_solutions):
     # intercepts
     intercepts = np.zeros(len(system_solutions))
     # construct residuals matrix
-    res = np.zeros((len(system_solutions), len(system_solutions[0][1])))
+    res = np.zeros(len(system_solutions))
     # construct using label to ensure matrix order
     for sol in system_solutions:
         coefs[sol[0]] = sol[1].reshape(1, -1)
         intercepts[sol[0]] = sol[5]
         res[sol[0]] = sol[2]
-    return coefs, intercepts, sum(res)
+    return coefs, intercepts, res
 
 
 def solve_regression_system(X: np.ndarray, Y: np.ndarray, n_jobs: int = 1, fit_intercept: bool = True):
@@ -61,15 +63,11 @@ def solve_regression_system(X: np.ndarray, Y: np.ndarray, n_jobs: int = 1, fit_i
      with every row of Y $$n \\times m$$ matrix
 
     """
-    solutions = joblib.Parallel(n_jobs=n_jobs)(joblib.delayed(lstsq)(*[X, Y[row], rid, fit_intercept, None]) for
+    batch_size = get_fold_step_size(Y.shape[0], n_jobs)
+    solutions = joblib.Parallel(n_jobs=n_jobs, batch_size=batch_size)(joblib.delayed(lstsq)(*[X, Y[row], rid,
+                                                                                              fit_intercept, None]) for
                                                rid, row in enumerate(range(Y.shape[0])))
     return construct_lstsq_solutions_matrix(solutions)
-
-
-def one_epm_step(X: np.ndarray, Y: np.ndarray, n_jobs=1):
-    state_site_sys = solve_regression_system(X, Y, n_jobs=n_jobs, fit_intercept=True)
-    step_states = lstsq(state_site_sys[0], Y - state_site_sys[1].reshape(-1, 1), rid=0, fit_intercept=False)
-    return state_site_sys, step_states
 
 
 def predict_epm_states(epm_coefs, epm_intercepts, Y) -> Tuple[np.ndarray, np.ndarray]:
@@ -78,5 +76,14 @@ def predict_epm_states(epm_coefs, epm_intercepts, Y) -> Tuple[np.ndarray, np.nda
                                                             fit_intercept=False)
     return _coefs.T
 
+
 def get_site_residuals(epm_coefs, epm_intercepts, X, Y):
     return Y - np.dot(epm_coefs, X.T) - epm_intercepts.reshape(-1, 1)
+
+
+def get_gradient(epm_coefs, epm_intercepts, X, Y):
+    residuals = get_site_residuals(epm_coefs, epm_intercepts, X, Y)
+    grad = np.ones(X.shape)
+    for p in range(X.shape[1]):
+        grad[:, p] = 2 * np.sum(X[:, p] * residuals, axis=0) / residuals.shape[0]
+    return grad

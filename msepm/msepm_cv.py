@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from msepm.base import EPMBase
 from msepm import MultistateEpigeneticPacemaker
-from msepm.helpers import tqdm_joblib
+from msepm.helpers import get_fold_step_size, tqdm_joblib
 
 
 class MultistateEpigeneticPacemakerCV(EPMBase):
@@ -79,10 +79,7 @@ class MultistateEpigeneticPacemakerCV(EPMBase):
         sample_indices = [count for count in range(sample_number)]
         if self.randomize:
             random.shuffle(sample_indices)
-        step_size = int(sample_number / self.cv_folds)
-        sample_remainder = sample_number % self.cv_folds
-        if sample_remainder:
-            step_size += int(sample_remainder / (self.cv_folds - 1))
+        step_size = get_fold_step_size(sample_number, self.cv_folds)
         test_indices = []
         for fold in range(self.cv_folds):
             if fold + 1 == self.cv_folds:

@@ -37,6 +37,14 @@ def pearson_correlation(X: np.array, Y: np.array, copy_input=True) -> np.array:
     return covariance / (Y_var * X_var.reshape((-1, 1)))
 
 
+def get_fold_step_size(iterations: int, folds: int):
+    step_size = int(iterations / folds)
+    sample_remainder = iterations % folds
+    if sample_remainder:
+        step_size += int(sample_remainder / (folds - 1))
+    return step_size
+
+
 @contextlib.contextmanager
 def tqdm_joblib(tqdm_object):
     """Context manager to patch joblib to report into tqdm progress bar given as argument,

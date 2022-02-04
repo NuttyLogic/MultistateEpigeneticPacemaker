@@ -16,4 +16,4 @@ class MultistateEpigeneticPacemaker(EPMBase):
             self.verbose = verbose
 
     def fit(self, X, Y, sample_weights=None):
-        self.fit_epm(X, Y, sample_weights, verbose=self.verbose)
+        return self.fit_epm(X, Y, sample_weights, verbose=self.verbose)

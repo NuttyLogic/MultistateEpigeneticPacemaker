@@ -1,9 +1,9 @@
 import numpy as np
 from tqdm import tqdm
-from msepm.compute import get_site_residuals, one_epm_step, predict_epm_states
+from msepm.compute import get_gradient, get_site_residuals
+from msepm.compute import predict_epm_states, solve_regression_system, lstsq
 from msepm.scaler import Scaler
 from msepm.helpers import pearson_correlation
-
 
 
 class EPMBase:
@@ -38,23 +38,28 @@ class EPMBase:
         scaler = Scaler()
         scaler.fit(fit_X)
         verbose_t = tqdm(disable=True if not verbose else False, desc=f'Fitting MSEPM ')
-        for _ in range(self.iter_limit):
-            _iter_sys, _iter_update = one_epm_step(fit_X, fit_Y, n_jobs=self.n_jobs)
+        for iteration in range(self.iter_limit):
+            _iter_sys = solve_regression_system(fit_X, fit_Y, n_jobs=self.n_jobs)
             _iter_error = sum(_iter_sys[2])
-            verbose_t.update(1)
-            if not error:
+            if iteration == 0:
                 error = _iter_error
             else:
                 if error - _iter_error < self.error_tolerance:
+                    fit_X += self.learning_rate * (_states - fit_X)
                     break
                 else:
                     error = _iter_error
-            fit_X += self.learning_rate * _iter_update[1].T
+            #gradient = get_gradient(_iter_sys[0], _iter_sys[1], fit_X, fit_Y)
+            #fit_X += self.learning_rate * get_gradient(_iter_sys[0], _iter_sys[1], fit_X, fit_Y)
+            _states = lstsq(_iter_sys[0], Y - _iter_sys[1].reshape(-1, 1), rid=0, fit_intercept=False)[1].T
+            fit_X += self.learning_rate * (_states - fit_X)
             if self.scale_X:
                 fit_X = scaler.transform(fit_X)
+            verbose_t.update(1)
         self._coefs = _iter_sys[0]
         self._intercepts = _iter_sys[1]
         self._error = error
+        return fit_X
 
     def score(self, X, Y):
         predictions = self.predict(Y)
