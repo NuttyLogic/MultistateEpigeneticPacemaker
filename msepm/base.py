@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-from msepm.compute import get_gradient, get_site_residuals
+from msepm.compute import get_state_gradient, get_site_residuals
 from msepm.compute import predict_epm_states, solve_regression_system, lstsq
 from msepm.scaler import Scaler
 from msepm.helpers import pearson_correlation
@@ -41,18 +41,16 @@ class EPMBase:
         for iteration in range(self.iter_limit):
             _iter_sys = solve_regression_system(fit_X, fit_Y, n_jobs=self.n_jobs)
             _iter_error = sum(_iter_sys[2])
+            gradient = get_state_gradient(_iter_sys[0], _iter_sys[1], fit_X, fit_Y)
             if iteration == 0:
                 error = _iter_error
             else:
                 if error - _iter_error < self.error_tolerance:
-                    fit_X += self.learning_rate * (_states - fit_X)
+                    fit_X += gradient * self.learning_rate * fit_X
                     break
                 else:
                     error = _iter_error
-            #gradient = get_gradient(_iter_sys[0], _iter_sys[1], fit_X, fit_Y)
-            #fit_X += self.learning_rate * get_gradient(_iter_sys[0], _iter_sys[1], fit_X, fit_Y)
-            _states = lstsq(_iter_sys[0], Y - _iter_sys[1].reshape(-1, 1), rid=0, fit_intercept=False)[1].T
-            fit_X += self.learning_rate * (_states - fit_X)
+            fit_X -= gradient * self.learning_rate
             if self.scale_X:
                 fit_X = scaler.transform(fit_X)
             verbose_t.update(1)
