@@ -10,7 +10,7 @@ class EPMBase:
 
     def __init__(self, iter_limit=100, n_jobs=1,
                  error_tolerance=0.001, learning_rate=0.01,
-                 scale_X=True, verbose=False):
+                 scale_X=False, verbose=False):
         self._coefs = None
         self._intercepts = None
         self._error = None
@@ -57,7 +57,6 @@ class EPMBase:
         self._coefs = _iter_sys[0]
         self._intercepts = _iter_sys[1]
         self._error = error
-        return fit_X
 
     def score(self, X, Y):
         predictions = self.predict(Y)

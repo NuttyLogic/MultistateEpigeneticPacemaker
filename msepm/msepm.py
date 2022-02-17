@@ -6,7 +6,7 @@ class MultistateEpigeneticPacemaker(EPMBase):
 
     def __init__(self, iter_limit=100, n_jobs=1,
                  error_tolerance=0.001, learning_rate=0.01,
-                 scale_X=True, verbose=False):
+                 scale_X=False, verbose=False):
             EPMBase.__init__(self)
             self.iter_limit = iter_limit
             self.n_jobs = n_jobs

@@ -16,7 +16,7 @@ class MultistateEpigeneticPacemakerCV(EPMBase):
                  cv_folds: int = 3, randomize_sample_order: bool = False,
                  iter_limit=100, n_jobs=1,
                  error_tolerance=0.001, learning_rate=0.01,
-                 scale_X=True, verbose=False):
+                 scale_X=False, verbose=False):
         EPMBase.__init__(self)
         self.cv_folds = cv_folds
         self.randomize = randomize_sample_order
