@@ -77,13 +77,13 @@ def predict_epm_states(epm_coefs, epm_intercepts, Y) -> Tuple[np.ndarray, np.nda
     return _coefs.T
 
 
-def get_site_residuals(epm_coefs, epm_intercepts, X, Y):
-    return Y - epm_intercepts.reshape(-1, 1) - np.dot(epm_coefs, X.T)
+def get_site_values(epm_coefs, epm_intercepts, X):
+    return epm_intercepts.reshape(-1, 1) + np.dot(epm_coefs, X.T)
 
 
 def get_state_gradient(coefs, intercepts, X, Y):
-    residuals = get_site_residuals(coefs, intercepts, X, Y)
+    neg_residuals = Y - get_site_values(coefs, intercepts, X)
     grad = np.ones(X.shape)
     for p in range(X.shape[1]):
-        grad[:, p] = -2 * np.sum(coefs[:, p].reshape(-1, 1) * residuals, axis=0) / residuals.shape[0]
+        grad[:, p] = -2 * np.sum(coefs[:, p].reshape(-1, 1) * neg_residuals, axis=0) / neg_residuals.shape[0]
     return grad

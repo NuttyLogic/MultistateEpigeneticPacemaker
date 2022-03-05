@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
-from msepm.compute import get_state_gradient, get_site_residuals
-from msepm.compute import predict_epm_states, solve_regression_system, lstsq
+from msepm.compute import get_state_gradient, get_site_values
+from msepm.compute import predict_epm_states, solve_regression_system
 from msepm.scaler import Scaler
 from msepm.helpers import pearson_correlation
 
@@ -21,13 +21,13 @@ class EPMBase:
         self.scale_X = scale_X
         self.verbose = verbose
 
-    def predict(self, Y: np.ndarray, return_residuals=False):
+    def predict(self, Y: np.ndarray, return_site_predictions=False):
         if self._coefs is None:
             print("EPM model not trained\nRun .fit method to train model")
             return 1
         _coef = predict_epm_states(self._coefs, self._intercepts, Y)
-        if return_residuals:
-            return _coef, get_site_residuals(self._coefs, self._intercepts, _coef, Y)
+        if return_site_predictions:
+            return _coef, get_site_values(self._coefs, self._intercepts, _coef)
         return _coef
 
     def fit_epm(self, X, Y, sample_weights=None, verbose=False):
