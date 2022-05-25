@@ -4,8 +4,20 @@ repo_url: https://github.com/NuttyLogic/MultistateEpigeneticPacemaker
 repo_name: 'GitHub'
 
 theme:
-  name: 'readthedocs'
+  name: 'material'
+  logo: img/lightning-bolt.png
+  favicon: img/lightning-bolt.png
+
+
 nav:
     - Home: index.md
     - API: API.md
     - Tutorial: tutorial.md
+      
+markdown_extensions:
+  - admonition
+  - codehilite
+  - mkautodoc
+
+extra_css:
+    - custom.css
