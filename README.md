@@ -13,5 +13,5 @@ pip3 install MultistateEpigeneticPacemaker
 
 ## Documentation
 
-[multistateepigeneticpacemaker.readthedocs.io](https://multiepigeneticpacemaker.readthedocs.io/en/latest/)
+[multistatepigeneticpacemaker.readthedocs.io](https://multistateepigeneticpacemaker.readthedocs.io/en/latest/)
 
