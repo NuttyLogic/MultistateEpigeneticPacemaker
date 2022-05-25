@@ -13,11 +13,12 @@ nav:
     - Home: index.md
     - API: API.md
     - Tutorial: tutorial.md
-      
+
 markdown_extensions:
   - admonition
   - codehilite
   - mkautodoc
+  - pymdownx.arithmatex
 
-extra_css:
-    - custom.css
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
